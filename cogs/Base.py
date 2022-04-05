@@ -109,7 +109,7 @@ class PlayerView(discord.ui.View):
                 button.style = discord.ButtonStyle.red
                 embed.set_field_at(2, name='State', value=':white_check_mark: Playing')
 
-        await interaction.response.edit_message(view=self)
+        await interaction.response.edit_message(view=self, embed=embed)
 
     @discord.ui.button(label='Add Song', style=discord.ButtonStyle.blurple)
     async def add_song_to_queue(self, interaction: discord.Interaction, button: discord.ui.Button):
@@ -235,6 +235,7 @@ class MusicalBase(commands.Cog):
                 await player.stop()
                 await player.disconnect()
                 player.queue.clear()
+                await self.bot.cache.cache[str(member.guild.id)]['message'].delete()
 
     @commands.Cog.listener()
     async def on_wavelink_track_end(self, player: wavelink.Player, track: wavelink.YouTubeTrack, reason):
@@ -248,7 +249,7 @@ class MusicalBase(commands.Cog):
                 new = None
                 await player.stop()
             msg = self.bot.cache.cache[str(player.guild.id)]['message']
-            await msg.edit(embed=create_embed(bot=self.bot, player=player, track=new))
+            await msg.edit(embed=create_embed(bot=self.bot, player=player, track=player.track))
 
     async def search_autocomplete(self, interaction: discord.Interaction, current: str) -> list[app_commands.Choice[str]]:
         songs = [app_commands.Choice(name=song, value=song) for song in self.bot.cache.cache['known_songs'] if current.lower() in song.lower()]
@@ -342,17 +343,8 @@ class MusicalBase(commands.Cog):
         view = discord.ui.View(timeout=None)
         view.add_item(CustomQueueSelect(self.bot, interaction.guild))
         print(view.children)
-        # if len(self.bot.custom_queues.cache[str(interaction.guild.id)].keys()) > 0:
-        #     print(self.bot.custom_queues.cache[str(interaction.guild.id)].keys())
-        #     for queue in list(self.bot.custom_queues.cache[str(interaction.guild.id)].keys()):
-        #         print(queue)
-        #         options.append(discord.SelectOption(label=queue))
-        #     super().__init__(options=options, placeholder="Select a custom Queue")
-        #else:
-         #   super().__init__(disabled=True, placeholder='You have not yet set custom queues', options=[])
         return await interaction.response.send_message(content='Select a queue to add to the current queue', view=view, ephemeral=True)
 
-   # @app_commands.command(name='manage_queues')
     @app_commands.command()
     async def save(self, interaction):
         await self.bot.cache.save()
