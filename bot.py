@@ -2,12 +2,13 @@ import asyncio
 import traceback
 from Cache.Cache import Cache
 import atexit
+import signal
+import sys
 
 import discord
 from discord.ext import commands
 
 import config
-
 
 intents = discord.Intents.default()
 intents.members = True
@@ -25,7 +26,7 @@ class MusicCache(Cache):
         else:
             return ":x: Not Looping"
 
-    async def save(self):
+    def save(self):
         keys = list(bot.cache.cache.keys())
         for i in range(2, len(keys) - 1):
             self.cache[keys[i]]['message'] = None
@@ -95,6 +96,7 @@ class DJ(commands.Bot):
         except:
             pass
 
+
 bot = DJ()
 
 
@@ -102,9 +104,14 @@ bot = DJ()
 @atexit.register
 def exited():
     # run the async exit_function
-    asyncio.run(bot.custom_queues.save())
-    asyncio.run(bot.cache.save())
+    bot.custom_queues.save()
+    bot.cache.save()
 
 
+def signal_handler(sig, frame):
+    print('You pressed Ctrl+C!')
+    # sys.exit(0)
+
+
+signal.signal(signal.SIGINT, signal_handler)
 bot.run()
-
