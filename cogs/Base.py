@@ -7,12 +7,6 @@ import wavelink
 import config
 
 
-async def handle_skip(player):
-    if not player.queue.is_empty:
-        new = await player.queue.get_wait()
-        await player.play(new)
-    else:
-        await player.stop()
 
 
 async def get_player(guild, user) -> wavelink.Player:
@@ -176,7 +170,6 @@ class PlayerView(discord.ui.View):
         await interaction.response.edit_message(embed=create_embed(self.bot, player, player.track))
 
 
-
 class CustomQueueSelect(discord.ui.Select):
     def __init__(self, bot, guild, reason):
         options = []
@@ -225,7 +218,6 @@ class CustomQueueSelect(discord.ui.Select):
             await interaction.response.send_modal(AddSongModal( bot=self.bot, queue=self.values[0],))
 
 
-
 class MusicalBase(commands.Cog):
 
     def __init__(self, bot):
@@ -250,7 +242,7 @@ class MusicalBase(commands.Cog):
             return
 
         if member == self.bot.user and after.channel is None:
-            player: wavelink.Player = await get_player(member.guild, member)
+            player: wavelink.Player = member.guild.voice_client
             if player is not None:
                 await player.stop()
                 await player.disconnect()
@@ -380,6 +372,7 @@ class MusicalBase(commands.Cog):
         print('second reach')
         await interaction.response.send_message('Saved', ephemeral=True)
 
+
 class ManageQueue(app_commands.Group):
 
     def __init__(self, bot):
@@ -387,11 +380,12 @@ class ManageQueue(app_commands.Group):
         super().__init__()
 
     @app_commands.command(name='add', description='Add a song to a custom Queue')
-    @app_commands.describe(song='The song you want to add to the queue')
     async def add_song_to_queue(self, interaction: discord.Interaction):
         view = discord.ui.View(timeout=None)
         view.add_item(CustomQueueSelect(self.bot, interaction.guild, "add"))
         return await interaction.response.send_message(content='Select a queue to add to the current queue', view=view, ephemeral=True)
+
+
 async def setup(bot):
-    await bot.add_cog(MusicalBase(bot), guilds=config.guilds)
+    await bot.add_cog(MusicalBase(bot))
     bot.tree.add_command(ManageQueue(bot))

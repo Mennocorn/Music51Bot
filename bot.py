@@ -30,7 +30,7 @@ class MusicCache(Cache):
         keys = list(bot.cache.cache.keys())
         for i in range(2, len(keys) - 1):
             self.cache[keys[i]]['message'] = None
-        await super().save()
+        super().save()
 
     async def get_message(self, guild: discord.Guild):
         channel = guild.get_channel(self._cache[str(guild.id)]['message_id'][1])
@@ -67,12 +67,11 @@ class DJ(commands.Bot):
                 if str(guild.id) not in list(self.cache.cache.keys()):
                     self.cache.cache[str(guild.id)] = {
                         "loop": False,
-                        "message_id": 0,
-                        "known_songs": [],
+                        "message": None,
                     }
                 if str(guild.id) not in self.custom_queues.cache.keys():
                     self.custom_queues.cache[str(guild.id)] = {}
-            await self.cache.save()
+            self.cache.save()
 
     async def on_guild_join(self, guild):
         if str(guild.id) not in list(self.cache.cache.keys()):
